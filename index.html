@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ohm's Law & Wheatstone Bridge Circuit Sim</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen py-8 px-4">
+<div class="max-w-2xl mx-auto">
+<h1 class="text-3xl font-bold text-cyan-400 mb-1">Circuit Simulator</h1>
+<p class="text-gray-400 text-sm mb-6">Ohm's Law Calculator + Wheatstone Bridge Solver</p>
+
+<div class="flex gap-2 mb-6" role="tablist" aria-label="Simulator mode selection">
+  <button id="tabOhm" class="flex-1 py-2 rounded-lg font-semibold text-sm transition bg-cyan-700 text-white" role="tab" aria-selected="true" aria-controls="ohmsPanel">Ohm's Law</button>
+  <button id="tabWheat" class="flex-1 py-2 rounded-lg font-semibold text-sm transition bg-gray-700 text-gray-300 hover:bg-gray-600" role="tab" aria-selected="false" aria-controls="wheatPanel">Wheatstone Bridge</button>
+</div>
+
+<div id="ohmsPanel" role="tabpanel">
+  <div class="bg-gray-800 rounded-2xl p-6 mb-4">
+    <p class="text-sm text-gray-400 mb-4">Enter any <strong class="text-cyan-300">2</strong> values. Leave the unknown blank.</p>
+    <div class="grid grid-cols-3 gap-4 mb-4">
+      <div class="bg-gray-700 rounded-xl p-4 text-center">
+        <label class="block text-xs text-gray-400 mb-2" for="voltage">V — Voltage (V)</label>
+        <input id="voltage" type="number" step="any" placeholder="?"
+          class="w-full bg-gray-600 rounded-lg px-3 py-2 text-white text-center text-lg font-mono focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          aria-label="Voltage in volts">
+      </div>
+      <div class="bg-gray-700 rounded-xl p-4 text-center">
+        <label class="block text-xs text-gray-400 mb-2" for="current">I — Current (A)</label>
+        <input id="current" type="number" step="any" placeholder="?"
+          class="w-full bg-gray-600 rounded-lg px-3 py-2 text-white text-center text-lg font-mono focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          aria-label="Current in amperes">
+      </div>
+      <div class="bg-gray-700 rounded-xl p-4 text-center">
+        <label class="block text-xs text-gray-400 mb-2" for="resistance">R — Resistance (Ω)</label>
+        <input id="resistance" type="number" step="any" placeholder="?"
+          class="w-full bg-gray-600 rounded-lg px-3 py-2 text-white text-center text-lg font-mono focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          aria-label="Resistance in ohms">
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <button id="calcOhm" class="flex-1 py-2 bg-cyan-600 hover:bg-cyan-500 rounded-lg font-semibold transition" aria-label="Calculate missing value">Calculate</button>
+      <button id="clearOhm" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm" aria-label="Clear all inputs">Clear</button>
+    </div>
+    <div id="ohmResult" class="hidden mt-4 bg-gray-700 rounded-xl p-4">
+      <p class="text-xs text-gray-400 mb-2">Result</p>
+      <div id="ohmResultContent" class="space-y-1"></div>
+      <p class="text-xs text-gray-500 mt-3" id="ohmFormula"></p>
+    </div>
+    <div id="ohmError" class="hidden mt-3 text-red-400 text-sm text-center"></div>
+  </div>
+  <div class="bg-gray-800 rounded-2xl p-5">
+    <p class="text-xs text-gray-400 mb-3 text-center">Circuit Diagram</p>
+    <svg id="ohmSvg" viewBox="0 0 300 180" class="w-full max-w-sm mx-auto block" role="img" aria-label="Ohm's law circuit diagram">
+      <rect x="10" y="40" width="280" height="100" rx="8" fill="none" stroke="#374151" stroke-width="1.5"/>
+      <line x1="10" y1="90" x2="70" y2="90" stroke="#6b7280" stroke-width="2"/>
+      <line x1="230" y1="90" x2="290" y2="90" stroke="#6b7280" stroke-width="2"/>
+      <rect x="70" y="72" width="160" height="36" rx="4" fill="#1e3a5f" stroke="#0891b2" stroke-width="2"/>
+      <text x="150" y="96" fill="#67e8f9" font-size="14" text-anchor="middle" font-family="monospace">R</text>
+      <circle cx="10" cy="90" r="8" fill="#1e40af" stroke="#3b82f6" stroke-width="2"/>
+      <circle cx="290" cy="90" r="8" fill="#1e40af" stroke="#3b82f6" stroke-width="2"/>
+      <text x="10" y="140" fill="#6b7280" font-size="10" text-anchor="middle">−</text>
+      <text x="290" y="140" fill="#6b7280" font-size="10" text-anchor="middle">+</text>
+      <text id="svgV" x="150" y="30" fill="#22d3ee" font-size="11" text-anchor="middle">V = ?</text>
+      <text id="svgI" x="150" y="160" fill="#a78bfa" font-size="11" text-anchor="middle">I = ?</text>
+      <text id="svgR" x="150" y="96" fill="#67e8f9" font-size="13" text-anchor="middle">R = ?</text>
+    </svg>
+  </div>
+</div>
+
+<div id="wheatPanel" class="hidden" role="tabpanel">
+  <div class="bg-gray-800 rounded-2xl p-6 mb-4">
+    <p class="text-sm text-gray-400 mb-4">Balance condition: <strong class="text-cyan-300">R1/R2 = R3/R4</strong>. Enter R1, R2, R3 to find R4.</p>
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <div class="bg-gray-700 rounded-xl p-4 text-center">
+        <label class="block text-xs text-gray-400 mb-2" for="wr1">R1 (Ω)</label>
+        <input id="wr1" type="number" step="any" value="100"
+          class="w-full bg-gray-600 rounded-lg px-3 py-2 text-white text-center font-mono focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          aria-label="Resistor 1 in ohms">
+      </div>
+      <div class="bg-gray-700 rounded-xl p-4 text-center">
+        <label class="block text-xs text-gray-400 mb-2" for="wr2">R2 (Ω)</label>
+        <input id="wr2" type="number" step="any" value="200"
+          class="w-full bg-gray-600 rounded-lg px-3 py-2 text-white text-center font-mono focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          aria-label="Resistor 2 in ohms">
+      </div>
+      <div class="bg-gray-700 rounded-xl p-4 text-center">
+        <label class="block text-xs text-gray-400 mb-2" for="wr3">R3 (Ω)</label>
+        <input id="wr3" type="number" step="any" value="150"
+          class="w-full bg-gray-600 rounded-lg px-3 py-2 text-white text-center font-mono focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          aria-label="Resistor 3 in ohms">
+      </div>
+      <div class="bg-gray-700 rounded-xl p-4 text-center border-2 border-cyan-600">
+        <p class="text-xs text-gray-400 mb-2">R4 (Unknown)</p>
+        <p id="r4Result" class="text-2xl font-bold font-mono text-cyan-300">—</p>
+      </div>
+    </div>
+    <button id="calcWheat" class="w-full py-2 bg-cyan-600 hover:bg-cyan-500 rounded-lg font-semibold transition" aria-label="Calculate unknown resistor R4">Calculate R4</button>
+    <div id="wheatResult" class="hidden mt-4 bg-gray-700 rounded-xl p-4 text-sm text-gray-300"></div>
+  </div>
+  <div class="bg-gray-800 rounded-2xl p-5">
+    <p class="text-xs text-gray-400 mb-3 text-center">Wheatstone Bridge Diagram</p>
+    <svg viewBox="0 0 320 240" class="w-full max-w-sm mx-auto block" role="img" aria-label="Wheatstone bridge circuit diagram">
+      <line x1="160" y1="20" x2="60" y2="120" stroke="#6b7280" stroke-width="2"/>
+      <line x1="160" y1="20" x2="260" y2="120" stroke="#6b7280" stroke-width="2"/>
+      <line x1="60" y1="120" x2="160" y2="220" stroke="#6b7280" stroke-width="2"/>
+      <line x1="260" y1="120" x2="160" y2="220" stroke="#6b7280" stroke-width="2"/>
+      <line x1="60" y1="120" x2="260" y2="120" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <circle cx="160" cy="20" r="7" fill="#1e40af" stroke="#3b82f6" stroke-width="2"/>
+      <circle cx="160" cy="220" r="7" fill="#1e40af" stroke="#3b82f6" stroke-width="2"/>
+      <circle cx="60" cy="120" r="5" fill="#374151" stroke="#6b7280" stroke-width="1.5"/>
+      <circle cx="260" cy="120" r="5" fill="#374151" stroke="#6b7280" stroke-width="1.5"/>
+      <text x="95" y="68" fill="#f59e0b" font-size="13" text-anchor="middle" font-family="monospace">R1</text>
+      <text x="225" y="68" fill="#f59e0b" font-size="13" text-anchor="middle" font-family="monospace">R2</text>
+      <text x="95" y="180" fill="#f59e0b" font-size="13" text-anchor="middle" font-family="monospace">R3</text>
+      <text x="225" y="180" fill="#22d3ee" font-size="13" text-anchor="middle" font-family="monospace">R4?</text>
+      <text x="160" y="116" fill="#22d3ee" font-size="10" text-anchor="middle">Galvanometer</text>
+      <text x="160" y="12" fill="#6b7280" font-size="10" text-anchor="middle">+Vs</text>
+      <text x="160" y="238" fill="#6b7280" font-size="10" text-anchor="middle">−Vs</text>
+    </svg>
+  </div>
+</div>
+
+<script>
+document.getElementById('tabOhm').addEventListener('click', () => {
+  document.getElementById('ohmsPanel').classList.remove('hidden');
+  document.getElementById('wheatPanel').classList.add('hidden');
+  document.getElementById('tabOhm').className = 'flex-1 py-2 rounded-lg font-semibold text-sm transition bg-cyan-700 text-white';
+  document.getElementById('tabWheat').className = 'flex-1 py-2 rounded-lg font-semibold text-sm transition bg-gray-700 text-gray-300 hover:bg-gray-600';
+  document.getElementById('tabOhm').setAttribute('aria-selected', 'true');
+  document.getElementById('tabWheat').setAttribute('aria-selected', 'false');
+});
+
+document.getElementById('tabWheat').addEventListener('click', () => {
+  document.getElementById('ohmsPanel').classList.add('hidden');
+  document.getElementById('wheatPanel').classList.remove('hidden');
+  document.getElementById('tabWheat').className = 'flex-1 py-2 rounded-lg font-semibold text-sm transition bg-cyan-700 text-white';
+  document.getElementById('tabOhm').className = 'flex-1 py-2 rounded-lg font-semibold text-sm transition bg-gray-700 text-gray-300 hover:bg-gray-600';
+  document.getElementById('tabWheat').setAttribute('aria-selected', 'true');
+  document.getElementById('tabOhm').setAttribute('aria-selected', 'false');
+});
+
+function fmtNum(n) {
+  if (Math.abs(n) >= 1e6) return (n/1e6).toFixed(4) + 'M';
+  if (Math.abs(n) >= 1e3) return (n/1e3).toFixed(4) + 'k';
+  if (Math.abs(n) < 0.001) return (n*1e6).toFixed(4) + 'μ';
+  return parseFloat(n.toPrecision(5)).toString();
+}
+
+document.getElementById('calcOhm').addEventListener('click', () => {
+  const vEl = document.getElementById('voltage');
+  const iEl = document.getElementById('current');
+  const rEl = document.getElementById('resistance');
+  const v = vEl.value.trim(), i = iEl.value.trim(), r = rEl.value.trim();
+  const result = document.getElementById('ohmResult');
+  const err = document.getElementById('ohmError');
+  const content = document.getElementById('ohmResultContent');
+  const formula = document.getElementById('ohmFormula');
+  err.classList.add('hidden');
+  result.classList.add('hidden');
+  content.textContent = '';
+  const vals = [v, i, r].filter(x => x !== '').length;
+  if (vals < 2) {
+    err.textContent = 'Enter at least 2 values.';
+    err.classList.remove('hidden'); return;
+  }
+  let V = v !== '' ? parseFloat(v) : null;
+  let I = i !== '' ? parseFloat(i) : null;
+  let R = r !== '' ? parseFloat(r) : null;
+  if (V !== null && I !== null && R === null) { R = V / I; formula.textContent = 'R = V / I'; }
+  else if (V !== null && R !== null && I === null) { I = V / R; formula.textContent = 'I = V / R'; }
+  else if (I !== null && R !== null && V === null) { V = I * R; formula.textContent = 'V = I × R'; }
+  else { V = parseFloat(v); I = parseFloat(i); R = parseFloat(r); formula.textContent = 'V = I × R (verification)'; }
+  const items = [
+    { label: 'V (Voltage)', val: V, unit: 'V', color: 'text-cyan-300' },
+    { label: 'I (Current)', val: I, unit: 'A', color: 'text-purple-300' },
+    { label: 'R (Resistance)', val: R, unit: 'Ω', color: 'text-amber-300' },
+  ];
+  items.forEach(({ label, val, unit, color }) => {
+    const row = document.createElement('div');
+    row.className = 'flex justify-between';
+    const l = document.createElement('span');
+    l.className = 'text-gray-400 text-sm';
+    l.textContent = label;
+    const rv = document.createElement('span');
+    rv.className = 'font-mono font-bold ' + color;
+    rv.textContent = fmtNum(val) + ' ' + unit;
+    row.appendChild(l); row.appendChild(rv);
+    content.appendChild(row);
+  });
+  document.getElementById('svgV').textContent = 'V = ' + fmtNum(V) + ' V';
+  document.getElementById('svgI').textContent = 'I = ' + fmtNum(I) + ' A';
+  document.getElementById('svgR').textContent = 'R = ' + fmtNum(R) + ' Ω';
+  result.classList.remove('hidden');
+});
+
+document.getElementById('clearOhm').addEventListener('click', () => {
+  ['voltage', 'current', 'resistance'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('ohmResult').classList.add('hidden');
+  document.getElementById('ohmError').classList.add('hidden');
+  document.getElementById('svgV').textContent = 'V = ?';
+  document.getElementById('svgI').textContent = 'I = ?';
+  document.getElementById('svgR').textContent = 'R = ?';
+});
+
+document.getElementById('calcWheat').addEventListener('click', () => {
+  const R1 = parseFloat(document.getElementById('wr1').value);
+  const R2 = parseFloat(document.getElementById('wr2').value);
+  const R3 = parseFloat(document.getElementById('wr3').value);
+  const wheatResult = document.getElementById('wheatResult');
+  if (isNaN(R1) || isNaN(R2) || isNaN(R3) || R1 <= 0 || R2 <= 0 || R3 <= 0) {
+    document.getElementById('r4Result').textContent = 'Error';
+    wheatResult.classList.add('hidden'); return;
+  }
+  const R4 = (R2 * R3) / R1;
+  document.getElementById('r4Result').textContent = fmtNum(R4) + ' Ω';
+  wheatResult.textContent = '';
+  const lines = [
+    'Balance condition: R1/R2 = R3/R4',
+    'R4 = R2 × R3 / R1',
+    'R4 = ' + R2 + ' × ' + R3 + ' / ' + R1 + ' = ' + fmtNum(R4) + ' Ω',
+    'Ratio R1/R2 = ' + fmtNum(R1/R2),
+    'Ratio R3/R4 = ' + fmtNum(R3/R4) + ' ✓ (balanced)',
+  ];
+  lines.forEach(line => {
+    const p = document.createElement('p');
+    p.textContent = line;
+    wheatResult.appendChild(p);
+  });
+  wheatResult.classList.remove('hidden');
+});
+</script>
+</div>
+</body>
+</html>
